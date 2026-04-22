@@ -1,0 +1,20 @@
+{
+  "name": "qualiqa-backend",
+  "version": "1.0.0",
+  "description": "QualiQA Backend - Node.js API",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "helmet": "^8.0.0",
+    "sql.js": "^1.11.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "express-validator": "^7.2.0",
+    "multer": "^2.0.1"
+  }
+}
