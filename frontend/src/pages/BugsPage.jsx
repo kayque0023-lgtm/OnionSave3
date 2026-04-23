@@ -86,6 +86,16 @@ export default function BugsPage() {
     else setSprints([]);
   };
 
+  const handleUpdateStatus = async (bugId, newStatus) => {
+    try {
+      await bugsAPI.update(bugId, { status: newStatus });
+      loadBugs();
+    } catch (err) {
+      console.error('Erro ao atualizar status do bug:', err);
+      alert('Erro ao atualizar status do bug');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.project_id || !formData.sprint_id || !formData.description) {
@@ -117,56 +127,129 @@ export default function BugsPage() {
     }
   };
 
+  // Reactive theme tracking for Chart.js
+  const [themeColors, setThemeColors] = useState({
+    text: '#1a1a1a',
+    muted: '#666666',
+    grid: '#e0e0e0',
+    card: '#ffffff'
+  });
+
+  useEffect(() => {
+    const updateColors = () => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      if (theme === 'dark') {
+        setThemeColors({
+          text: '#F0F6FC',
+          muted: '#8B949E',
+          grid: '#30363D',
+          card: '#161B22'
+        });
+      } else {
+        setThemeColors({
+          text: '#1a1a1a',
+          muted: '#666666',
+          grid: '#e0e0e0',
+          card: '#ffffff'
+        });
+      }
+    };
+    
+    updateColors();
+    const observer = new MutationObserver(updateColors);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
   // Chart Data preparation
   const chartData = useMemo(() => {
-    const counts = {};
+    const categories = {}; // Labels (Projects or Sprints)
+    const statusMap = {
+      approved: { label: 'Resolvido', color: '#22C55E' },
+      rejected: { label: 'Recusado', color: '#EF4444' },
+      pending: { label: 'Pendente', color: '#6B7280' }
+    };
+
     bugs.forEach(b => {
       const key = selectedProjectId ? b.sprint_name : b.project_name;
-      counts[key] = (counts[key] || 0) + 1;
+      if (!categories[key]) {
+        categories[key] = { approved: 0, rejected: 0, pending: 0 };
+      }
+      const status = b.status || 'pending';
+      categories[key][status]++;
     });
 
+    const labels = Object.keys(categories);
+    
     return {
-      labels: Object.keys(counts),
+      labels,
       datasets: [
         {
-          label: 'Quantidade de Bugs',
-          data: Object.values(counts),
-          backgroundColor: 'rgba(239, 68, 68, 0.8)', // Red
-          borderColor: 'rgb(220, 38, 38)',
-          borderWidth: 1,
-          maxBarThickness: 60,
+          label: 'Resolvido',
+          data: labels.map(l => categories[l].approved),
+          backgroundColor: '#22C55E',
+          maxBarThickness: 40,
+        },
+        {
+          label: 'Recusado',
+          data: labels.map(l => categories[l].rejected),
+          backgroundColor: '#EF4444',
+          maxBarThickness: 40,
+        },
+        {
+          label: 'Pendente',
+          data: labels.map(l => categories[l].pending),
+          backgroundColor: '#6B7280',
+          maxBarThickness: 40,
         },
       ],
     };
   }, [bugs, selectedProjectId]);
 
   const chartOptions = {
-    indexAxis: 'y',
+    indexAxis: 'x',
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart',
-      x: {
-        from: 500 // Inicia as barras mais à direita para dar o efeito de "jogadas para a esquerda"
-      }
-    },
     plugins: {
-      legend: { position: 'top' },
+      legend: { 
+        position: 'top',
+        labels: {
+          color: themeColors.text,
+          font: { family: 'inherit', size: 12 }
+        }
+      },
       title: { 
         display: true, 
         text: selectedProjectId ? 'Bugs por Test Case' : 'Bugs por Projeto',
-        color: 'var(--text-primary)'
+        color: themeColors.text,
+        font: { size: 16, weight: 'bold' }
       },
+      tooltip: {
+        backgroundColor: themeColors.card,
+        titleColor: themeColors.text,
+        bodyColor: themeColors.text,
+        borderColor: themeColors.grid,
+        borderWidth: 1
+      }
     },
     scales: {
-      x: {
-        beginAtZero: true,
-        ticks: { stepSize: 1, color: 'var(--text-secondary)' },
-        grid: { color: 'var(--border)' }
-      },
       y: {
-        ticks: { color: 'var(--text-secondary)' },
+        stacked: true,
+        beginAtZero: true,
+        ticks: { 
+          stepSize: 1, 
+          color: themeColors.muted 
+        },
+        grid: { color: themeColors.grid, drawBorder: false }
+      },
+      x: {
+        stacked: true,
+        ticks: { 
+          color: themeColors.text,
+          font: { size: 10 },
+          maxRotation: 45,
+          minRotation: 45
+        },
         grid: { display: false }
       }
     }
@@ -237,6 +320,7 @@ export default function BugsPage() {
                   <th style={{ padding: '1rem' }}>Test Case</th>
                   <th style={{ padding: '1rem' }}>Descrição</th>
                   <th style={{ padding: '1rem' }}>Evidência</th>
+                  <th style={{ padding: '1rem' }}>Status</th>
                   <th style={{ padding: '1rem' }}>Data</th>
                 </tr>
               </thead>
@@ -267,6 +351,25 @@ export default function BugsPage() {
                       ) : (
                         <span style={{ color: 'var(--text-muted)' }}>Sem evidência</span>
                       )}
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      <select 
+                        className="form-select"
+                        style={{ 
+                          padding: '0.25rem 0.5rem', 
+                          fontSize: '0.75rem', 
+                          width: '135px',
+                          border: '1px solid var(--border)',
+                          backgroundColor: 'var(--bg-input)',
+                          color: bug.status === 'approved' ? '#22C55E' : bug.status === 'rejected' ? '#EF4444' : 'var(--text-primary)'
+                        }}
+                        value={bug.status || 'pending'}
+                        onChange={(e) => handleUpdateStatus(bug.id, e.target.value)}
+                      >
+                        <option value="pending" style={{ color: '#6B7280' }}>● Pendente</option>
+                        <option value="approved" style={{ color: '#22C55E' }}>● Resolvido</option>
+                        <option value="rejected" style={{ color: '#EF4444' }}>● Recusado</option>
+                      </select>
                     </td>
                     <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                       {formatDate(bug.created_at)}

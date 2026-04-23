@@ -5,7 +5,7 @@ import { Pie, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
 import { projectsAPI, commentsAPI } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
-import { BarChart3, FolderOpen, Bug, CheckCircle, Clock, AlertTriangle, MessageSquare, Search, FlaskConical, Code2, UserCircle, ClipboardList } from 'lucide-react';
+import { BarChart3, FolderOpen, Bug, CheckCircle, Clock, AlertTriangle, MessageSquare, Search, FlaskConical, Code2, UserCircle, ClipboardList, TestTube2 } from 'lucide-react';
 
 ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
@@ -49,6 +49,40 @@ export default function DashboardPage() {
     total: acc.total + (p.sprint_count || 0),
   }), { approved: 0, bugs: 0, blocked: 0, rejected: 0, pending: 0, total: 0 });
 
+  // Reactive theme tracking for Chart.js
+  const [themeColors, setThemeColors] = useState({
+    text: '#1a1a1a',
+    muted: '#94A3B8',
+    grid: 'rgba(0,0,0,0.05)',
+    card: '#ffffff'
+  });
+
+  useEffect(() => {
+    const updateColors = () => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      if (theme === 'dark') {
+        setThemeColors({
+          text: '#F1F5F9',
+          muted: '#94A3B8',
+          grid: 'rgba(255,255,255,0.05)',
+          card: '#161B22'
+        });
+      } else {
+        setThemeColors({
+          text: '#1a1a1a',
+          muted: '#64748B',
+          grid: 'rgba(0,0,0,0.05)',
+          card: '#ffffff'
+        });
+      }
+    };
+    
+    updateColors();
+    const observer = new MutationObserver(updateColors);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
   const chartData = {
     labels: ['Passed (Aprovados)', 'Failed (Rejeitados)', 'Pending (Pendentes)', 'Bug', 'Bloqueados'],
     datasets: [{
@@ -57,14 +91,14 @@ export default function DashboardPage() {
         'rgba(34, 197, 94, 0.8)', // Green
         'rgba(239, 68, 68, 0.8)',  // Red
         'rgba(234, 179, 8, 0.8)',  // Yellow
-        'rgba(15, 23, 42, 0.8)',   // Black
+        'rgba(107, 114, 128, 0.8)', // Grey (Bugs)
         'rgba(245, 158, 11, 0.8)', // Orange
       ],
       borderColor: [
         '#22C55E',
         '#EF4444',
         '#EAB308',
-        '#0F172A',
+        '#6B7280',
         '#F59E0B',
       ],
       borderWidth: 2,
@@ -79,17 +113,19 @@ export default function DashboardPage() {
       legend: {
         position: 'bottom',
         labels: {
-          color: '#94A3B8',
+          color: themeColors.muted,
           padding: 16,
           font: { family: 'Inter', size: 12 },
-          boxWidth: 0,
+          boxWidth: 12,
+          usePointStyle: true,
+          pointStyle: 'circle'
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 31, 61, 0.95)',
-        titleColor: '#F1F5F9',
-        bodyColor: '#94A3B8',
-        borderColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: themeColors.card,
+        titleColor: themeColors.text,
+        bodyColor: themeColors.muted,
+        borderColor: themeColors.grid,
         borderWidth: 1,
         cornerRadius: 8,
         padding: 12,
@@ -116,7 +152,7 @@ export default function DashboardPage() {
         'rgba(34, 197, 94, 0.8)',
         'rgba(239, 68, 68, 0.8)', 
         'rgba(234, 179, 8, 0.8)', 
-        'rgba(15, 23, 42, 0.8)',  
+        'rgba(107, 114, 128, 0.8)',  
         'rgba(245, 158, 11, 0.8)'
       ],
       borderRadius: 4,
@@ -131,8 +167,15 @@ export default function DashboardPage() {
       tooltip: chartOptions.plugins.tooltip
     },
     scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-      x: { ticks: { color: '#94A3B8', font: { family: 'Inter', size: 10 } }, grid: { display: false } }
+      y: { 
+        beginAtZero: true, 
+        ticks: { stepSize: 1, color: themeColors.muted }, 
+        grid: { color: themeColors.grid } 
+      },
+      x: { 
+        ticks: { color: themeColors.muted, font: { family: 'Inter', size: 10 } }, 
+        grid: { display: false } 
+      }
     }
   };
 
@@ -168,10 +211,10 @@ export default function DashboardPage() {
                 <BarChart3 size={18} style={{ color: 'var(--accent)' }} />
                 Status de Testes
               </h2>
-              <p className="card-subtitle">Distribuição geral dos sprints</p>
+              <p className="card-subtitle">Distribuição geral dos test cases</p>
             </div>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Total: {stats.total} sprints
+              Total: {stats.total} test cases
             </span>
           </div>
           <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -272,97 +315,91 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Recent Activity */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <MessageSquare size={18} style={{ color: 'var(--accent)' }} />
-            Atividades Recentes
-          </h2>
-        </div>
-        {recentComments.length > 0 ? (
-          <div className="activity-feed">
-            {recentComments.map(comment => (
-              <div key={comment.id} className="activity-item">
-                <div className="activity-avatar">
-                  {comment.user_name?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-                <div className="activity-content">
-                  <div className="activity-header">
-                    <div>
-                      <span className="activity-user">{comment.user_name}</span>
-                      {comment.project_name && (
-                        <span className="activity-project" style={{ marginLeft: '0.5rem' }}>
-                          {comment.project_name}
-                        </span>
-                      )}
-                    </div>
-                    <span className="activity-time">{formatDate(comment.created_at)}</span>
+      <div className="dashboard-grid">
+        {/* Recent Activity */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <MessageSquare size={18} style={{ color: 'var(--accent)' }} />
+              Atividades Recentes
+            </h2>
+          </div>
+          {recentComments.length > 0 ? (
+            <div className="activity-feed">
+              {recentComments.map(comment => (
+                <div key={comment.id} className="activity-item">
+                  <div className="activity-avatar">
+                    {comment.user_name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
-                  <p className="activity-text">{comment.content}</p>
+                  <div className="activity-content">
+                    <div className="activity-header">
+                      <div>
+                        <span className="activity-user">{comment.user_name}</span>
+                        {comment.project_name && (
+                          <span className="activity-project" style={{ marginLeft: '0.5rem' }}>
+                            {comment.project_name}
+                          </span>
+                        )}
+                      </div>
+                      <span className="activity-time">{formatDate(comment.created_at)}</span>
+                    </div>
+                    <p className="activity-text">{comment.content}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <MessageSquare size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem', opacity: 0.4 }} />
-            <p className="empty-state-title">Nenhuma atividade recente</p>
-            <p className="empty-state-text">Comentários dos seus projetos aparecerão aqui</p>
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <MessageSquare size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem', opacity: 0.4 }} />
+              <p className="empty-state-title">Nenhuma atividade recente</p>
+              <p className="empty-state-text">Comentários dos seus projetos aparecerão aqui</p>
+            </div>
+          )}
+        </div>
 
-      {/* Quick Project Cards */}
-      {projects.length > 0 && (
-        <div className="card" style={{ marginTop: '1.5rem' }}>
-          <h2 className="card-title mb-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <FolderOpen size={18} style={{ color: 'var(--accent)' }} />
-            Seus Projetos
-          </h2>
+        {/* Recent Projects Selection */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <FolderOpen size={18} style={{ color: 'var(--accent)' }} />
+              Seus Projetos
+            </h2>
+          </div>
           
-          <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+          <div style={{ marginBottom: '1rem', position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
-              id="search-dashboard-projects"
               className="form-input"
-              style={{ paddingLeft: '2.5rem', maxWidth: '400px', background: '#fff', color: '#1a1a1a', border: '1px solid rgba(0,0,0,0.1)' }}
+              style={{ paddingLeft: '2.5rem' }}
               placeholder="Pesquisar projetos..."
               value={projectSearch}
               onChange={e => setProjectSearch(e.target.value)}
             />
           </div>
 
-          <div className="projects-grid">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {projects
               .filter(p => p.name.toLowerCase().includes(projectSearch.toLowerCase()))
-              .slice(0, 6)
-              .map(project => {
-              const total = (project.approved_count || 0) + (project.bug_count || 0) +
-                (project.blocked_count || 0) + (project.rejected_count || 0) + (project.pending_count || 0);
-              return (
-                <div key={project.id} className="project-card" onClick={() => navigate(`/projects/${project.id}`)}>
-                  <h3 className="project-name">{project.name}</h3>
-                  <div className="project-meta">
-                    {project.qa_name && <span className="project-meta-item"><FlaskConical size={12} /> {project.qa_name}</span>}
-                    {project.developer_name && <span className="project-meta-item"><Code2 size={12} /> {project.developer_name}</span>}
-                    <span className="project-meta-item"><ClipboardList size={12} /> {project.sprint_count || 0} test cases</span>
+              .slice(0, 5)
+              .map(project => (
+                <div 
+                  key={project.id} 
+                  className="stat-item" 
+                  style={{ cursor: 'pointer', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600 }}>{project.name}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{project.sprint_count || 0} Test Cases</span>
                   </div>
-                  {total > 0 && (
-                    <div className="project-stats-bar">
-                      <div style={{ width: `${(project.approved_count / total) * 100}%`, background: 'var(--status-approved)' }} />
-                      <div style={{ width: `${(project.bug_count / total) * 100}%`, background: 'var(--status-bug)' }} />
-                      <div style={{ width: `${(project.blocked_count / total) * 100}%`, background: 'var(--status-blocked)' }} />
-                      <div style={{ width: `${(project.rejected_count / total) * 100}%`, background: 'var(--status-rejected)' }} />
-                      <div style={{ width: `${(project.pending_count / total) * 100}%`, background: 'var(--status-pending)' }} />
-                    </div>
-                  )}
                 </div>
-              );
-            })}
+              ))}
+            <button className="btn btn-secondary w-full" style={{ marginTop: '0.5rem' }} onClick={() => navigate('/projects')}>
+              Ver todos os projetos
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

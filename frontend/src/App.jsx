@@ -28,7 +28,7 @@ function ProtectedRoute({ children }) {
   useEffect(() => {
     const updateColor = () => {
       const theme = document.documentElement.getAttribute('data-theme');
-      setParticleColor(theme === 'dark' ? "#ffffff" : "#000000");
+      setParticleColor(theme === 'dark' ? "#00D1FF" : "#000000");
     };
     
     updateColor();

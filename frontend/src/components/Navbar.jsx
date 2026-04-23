@@ -32,7 +32,7 @@ export default function Navbar() {
     <nav className="navbar">
       <Link to="/" className="navbar-brand">
         <div className="navbar-logo">O</div>
-        <div className="navbar-title">Onion</div>
+        <div className="navbar-title">ALM Onion</div>
       </Link>
 
       <div className="navbar-links">

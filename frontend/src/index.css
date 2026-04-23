@@ -287,13 +287,13 @@ a:hover {
 /* ============================================ */
 
 .card {
-  background: #FAF9F6;
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   transition: all var(--transition-base);
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .card:hover {
@@ -479,10 +479,10 @@ a:hover {
 .form-select {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: #FFFFFF;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: #1a1a1a;
+  color: var(--text-primary);
   font-size: 0.9rem;
   font-family: inherit;
   transition: all var(--transition-fast);
@@ -492,18 +492,29 @@ a:hover {
 .form-input:focus,
 .form-textarea:focus,
 .form-select:focus {
-  background: #ffffff;
+  background: var(--bg-input-focus);
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-::placeholder {
-  color: #888;
-  opacity: 1;
+/* Browser autofill fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  -webkit-box-shadow: 0 0 0px 1000px var(--bg-input) inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
-::-ms-input-placeholder {
-  color: #888;
+::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .form-input::placeholder,
@@ -610,17 +621,17 @@ a:hover {
 }
 
 .stat-item {
-  background: #FFFFFF;
-  border: 1px solid rgba(0,0,0,0.05);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 1rem;
   text-align: center;
   transition: all var(--transition-fast);
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .stat-item:hover {
-  background: #FAF9F6;
+  background: var(--bg-card-hover);
   transform: translateY(-2px);
 }
 
@@ -652,15 +663,16 @@ a:hover {
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
   transition: all var(--transition-fast);
+  color: var(--text-primary);
 }
 
 .activity-item:hover {
-  background: #FAF9F6;
-  border-color: rgba(0,0,0,0.1);
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
 }
 
 .activity-avatar {
@@ -803,12 +815,13 @@ a:hover {
 /* ============================================ */
 
 .sprint-card {
-  background: #FFFFFF;
-  border: 1px solid rgba(0,0,0,0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   margin-bottom: 1rem;
   overflow: hidden;
   transition: all var(--transition-base);
+  color: var(--text-primary);
 }
 
 .sprint-card:hover {
@@ -820,8 +833,8 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: #FAF9F6;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .sprint-name {
@@ -911,14 +924,15 @@ a:hover {
 }
 
 .project-card {
-  background: #FFFFFF;
-  border: 1px solid rgba(0,0,0,0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   cursor: pointer;
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
+  color: var(--text-primary);
 }
 
 .project-card::before {
@@ -1306,107 +1320,45 @@ a:hover {
 .w-full { width: 100%; }
 
 [data-theme='dark'] {
-  /* — Dusty Grey dark backgrounds — */
-  --bg-primary: #7A7A7A;
-  --bg-secondary: #6E6E6E;
-  --bg-tertiary: #626262;
-  --bg-card: rgba(90, 90, 90, 0.6);
-  --bg-card-hover: rgba(80, 80, 80, 0.75);
-  --bg-glass: rgba(255, 255, 255, 0.07);
-  --bg-glass-hover: rgba(255, 255, 255, 0.12);
-  --bg-input: rgba(255, 255, 255, 0.15);
-  --bg-input-focus: rgba(255, 255, 255, 0.22);
+  /* — Premium Deep Midnight — */
+  --bg-primary: #0A0C10;
+  --bg-secondary: #12141C;
+  --bg-tertiary: #1C1F26;
+  --bg-card: #161B22;
+  --bg-card-hover: #1D2433;
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-glass-hover: rgba(255, 255, 255, 0.08);
+  --bg-input: #0D1117;
+  --bg-input-focus: #161B22;
 
-  /* — Deep Teal accent — */
-  --accent: #00A0A0;
-  --accent-hover: #008080;
-  --accent-glow: rgba(0, 160, 160, 0.35);
-  --accent-subtle: rgba(0, 160, 160, 0.15);
+  /* — Electric Cyan accent — */
+  --accent: #00D1FF;
+  --accent-hover: #00B4DB;
+  --accent-glow: rgba(0, 209, 255, 0.3);
+  --accent-subtle: rgba(0, 209, 255, 0.1);
 
   /* — Text — */
-  --text-primary: #F0F0F0;
-  --text-secondary: #D0D0D0;
-  --text-muted: #A8A8A8;
-  --text-accent: #5DCECE;
+  --text-primary: #F0F6FC;
+  --text-secondary: #C9D1D9;
+  --text-muted: #8B949E;
+  --text-accent: #58A6FF;
 
   /* — Border — */
-  --border: rgba(255, 255, 255, 0.15);
-  --border-hover: rgba(255, 255, 255, 0.28);
-  --border-accent: rgba(0, 160, 160, 0.4);
+  --border: #30363D;
+  --border-hover: #484F58;
+  --border-accent: rgba(0, 209, 255, 0.4);
 
   /* — Shadows — */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.45);
-  --shadow-glow: 0 0 20px rgba(0, 160, 160, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 20px rgba(0, 209, 255, 0.15);
 
-  /* — Ripple Visibility — */
-  --ripple-opacity-multiplier: 2.5;
+  /* — Ripple/Particles — */
+  --ripple-opacity-multiplier: 1.5;
+  --particle-color: #00D1FF;
 }
 
 /* ============================================ */
-/* Off-White Cards Overrides for Dark Mode      */
+/* End of Theme Variables                       */
 /* ============================================ */
-
-[data-theme='dark'] .card,
-[data-theme='dark'] .auth-card {
-  background: #FAF9F6 !important;
-  color: #1a1a1a !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-[data-theme='dark'] .stat-item,
-[data-theme='dark'] .project-card,
-[data-theme='dark'] .sprint-card,
-[data-theme='dark'] .activity-item,
-[data-theme='dark'] .form-input,
-[data-theme='dark'] .form-textarea,
-[data-theme='dark'] .form-select {
-  background: #FFFFFF !important;
-  color: #1a1a1a !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-[data-theme='dark'] .card .card-title,
-[data-theme='dark'] .card .card-subtitle,
-[data-theme='dark'] .card .page-title,
-[data-theme='dark'] .card h1,
-[data-theme='dark'] .card h2,
-[data-theme='dark'] .card h3,
-[data-theme='dark'] .card p,
-[data-theme='dark'] .card span:not(.badge),
-[data-theme='dark'] .card label,
-[data-theme='dark'] .stat-item .stat-label,
-[data-theme='dark'] .stat-item .stat-value,
-[data-theme='dark'] .sprint-card .sprint-name,
-[data-theme='dark'] .sprint-card .step-description,
-[data-theme='dark'] .sprint-card .step-expected,
-[data-theme='dark'] .activity-item .activity-user,
-[data-theme='dark'] .activity-item .activity-text,
-[data-theme='dark'] .project-card .project-name,
-[data-theme='dark'] .project-card .project-meta-item,
-[data-theme='dark'] .auth-card .auth-title,
-[data-theme='dark'] .auth-card .auth-subtitle,
-[data-theme='dark'] .auth-card .form-label,
-[data-theme='dark'] .auth-card .auth-footer {
-  color: #1a1a1a !important;
-}
-
-[data-theme='dark'] .stat-item:hover,
-[data-theme='dark'] .project-card:hover,
-[data-theme='dark'] .activity-item:hover {
-  background: #F0EFEC !important;
-}
-
-/* Fix for icons inside light cards in dark mode */
-[data-theme='dark'] .card .lucide,
-[data-theme='dark'] .stat-item .lucide,
-[data-theme='dark'] .project-card .lucide {
-  color: #333333 !important;
-}
-
-/* Except for accent icons */
-[data-theme='dark'] .card .lucide[style*="var(--accent)"],
-[data-theme='dark'] .stat-item .lucide[style*="var(--accent)"] {
-  color: var(--accent) !important;
-}

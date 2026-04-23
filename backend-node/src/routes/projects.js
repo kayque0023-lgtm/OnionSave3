@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
       SELECT p.*, 
         (SELECT COUNT(*) FROM sprints WHERE project_id = p.id) as sprint_count,
         (SELECT COUNT(*) FROM sprints WHERE project_id = p.id AND status = 'approved') as approved_count,
-        (SELECT COUNT(*) FROM sprints WHERE project_id = p.id AND status = 'bug') as bug_count,
+        (SELECT COUNT(*) FROM bugs WHERE project_id = p.id) as bug_count,
         (SELECT COUNT(*) FROM sprints WHERE project_id = p.id AND status = 'blocked') as blocked_count,
         (SELECT COUNT(*) FROM sprints WHERE project_id = p.id AND status = 'rejected') as rejected_count,
         (SELECT COUNT(*) FROM sprints WHERE project_id = p.id AND status = 'pending_approval') as pending_count

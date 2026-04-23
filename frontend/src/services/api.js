@@ -64,6 +64,7 @@ export const commentsAPI = {
 export const bugsAPI = {
   list: (projectId) => NODE_API.get('/bugs', { params: { projectId } }),
   create: (data) => NODE_API.post('/bugs', data),
+  update: (id, data) => NODE_API.put(`/bugs/${id}`, data),
 };
 
 // Analytics (Python API)

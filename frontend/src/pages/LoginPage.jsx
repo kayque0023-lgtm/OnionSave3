@@ -38,7 +38,7 @@ export default function LoginPage() {
   useEffect(() => {
     const updateColor = () => {
       const theme = document.documentElement.getAttribute('data-theme');
-      setParticleColor(theme === 'dark' ? "#ffffff" : "#000000");
+      setParticleColor(theme === 'dark' ? "#00D1FF" : "#000000");
     };
     updateColor();
     const observer = new MutationObserver(updateColor);
@@ -64,7 +64,7 @@ export default function LoginPage() {
           <p className="auth-subtitle">
             {isRegister
               ? 'Preencha seus dados para começar'
-              : 'Entre na sua conta Onion'
+              : 'Entre na sua conta ALM Onion'
             }
           </p>
         </div>

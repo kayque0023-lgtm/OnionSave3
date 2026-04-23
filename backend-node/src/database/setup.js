@@ -110,9 +110,17 @@ async function initializeDatabase() {
       serial_number TEXT,
       description TEXT,
       evidence_url TEXT,
+      status TEXT DEFAULT 'pending',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Add status column to bugs if it doesn't exist (migration)
+  try {
+    database.run('ALTER TABLE bugs ADD COLUMN status TEXT DEFAULT "pending"');
+  } catch (e) {
+    // Column already exists or table doesn't exist yet
+  }
 
   saveDb();
   console.log('✅ Banco de dados inicializado com sucesso');

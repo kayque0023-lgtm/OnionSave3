@@ -245,13 +245,13 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {/* Sprints Section */}
+      {/* Test Cases Section */}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><TestTube2 size={18} style={{ color: 'var(--accent)' }} /> Test Cases ({sprints.length})</h2>
         </div>
 
-        {/* Add Sprint */}
+        {/* Add Test Case */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
           <input className="form-input" placeholder="Nome do test case..."
             value={newSprintName} onChange={e => setNewSprintName(e.target.value)}
@@ -262,7 +262,7 @@ export default function ProjectDetailPage() {
           </button>
         </div>
 
-        {/* Sprint Cards */}
+        {/* Test Case Cards */}
         {sprints.map(sprint => (
           <div key={sprint.id} className="sprint-card">
             <div className="sprint-header">
