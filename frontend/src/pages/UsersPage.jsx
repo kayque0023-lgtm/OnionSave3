@@ -21,6 +21,8 @@ export default function UsersPage() {
   const [parameters, setParameters] = useState([]);
   const [newParamCategory, setNewParamCategory] = useState('developer');
   const [newParamValue, setNewParamValue] = useState('');
+  const [paramSearch, setParamSearch] = useState('');
+  const [paramFilters, setParamFilters] = useState({ client: true, developer: true, qa: true, manager: true });
 
   // Role change confirm modal
   const [confirmModal, setConfirmModal] = useState(null);
@@ -154,6 +156,12 @@ export default function UsersPage() {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
+  });
+
+  const filteredParameters = parameters.filter(p => {
+    if (!paramFilters[p.category]) return false;
+    if (paramSearch && !p.value.toLowerCase().includes(paramSearch.toLowerCase())) return false;
+    return true;
   });
 
   if (loading) return <div className="loading-container"><div className="spinner" /></div>;
@@ -538,6 +546,28 @@ export default function UsersPage() {
             <div className="card-header" style={{ borderBottom: '1px solid var(--border)', padding: '1.5rem 1.5rem 1.25rem 1.5rem', margin: 0 }}>
               <h2 className="card-title">Opções Cadastradas</h2>
             </div>
+            
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', background: 'var(--bg-tertiary)' }}>
+              <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                <Search size={15} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input className="form-input" style={{ paddingLeft: '2.2rem', paddingRight: '0.75rem', paddingBottom: '0.6rem', paddingTop: '0.6rem', fontSize: '0.85rem' }} placeholder="Buscar parâmetro..." value={paramSearch} onChange={e => setParamSearch(e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}>
+                  <input type="checkbox" checked={paramFilters.client} onChange={e => setParamFilters({...paramFilters, client: e.target.checked})} /> Empresa Cliente
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}>
+                  <input type="checkbox" checked={paramFilters.developer} onChange={e => setParamFilters({...paramFilters, developer: e.target.checked})} /> Desenvolvedor(a)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}>
+                  <input type="checkbox" checked={paramFilters.qa} onChange={e => setParamFilters({...paramFilters, qa: e.target.checked})} /> Analista QA
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}>
+                  <input type="checkbox" checked={paramFilters.manager} onChange={e => setParamFilters({...paramFilters, manager: e.target.checked})} /> Gestor
+                </label>
+              </div>
+            </div>
+
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-tertiary)' }}>
@@ -547,7 +577,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {parameters.map((p, i) => (
+                {filteredParameters.map((p, i) => (
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-secondary)' }}>
                     <td style={{ padding: '0.75rem 1rem', fontWeight: 600, textTransform: 'capitalize' }}>
                       {p.category === 'client' ? 'Cliente' : p.category === 'developer' ? 'Desenvolvedor' : p.category === 'qa' ? 'QA' : 'Gestor'}
@@ -562,8 +592,8 @@ export default function UsersPage() {
                     </td>
                   </tr>
                 ))}
-                {parameters.length === 0 && (
-                  <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Nenhum parâmetro cadastrado.</td></tr>
+                {filteredParameters.length === 0 && (
+                  <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Nenhum parâmetro encontrado.</td></tr>
                 )}
               </tbody>
             </table>
