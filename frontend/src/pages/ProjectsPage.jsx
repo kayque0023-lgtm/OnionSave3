@@ -72,6 +72,22 @@ export default function ProjectsPage() {
               (project.blocked_count || 0) + (project.rejected_count || 0) + (project.pending_count || 0);
             return (
               <div key={project.id} className="project-card" onClick={() => navigate(`/projects/${project.id}`)}>
+                {project.client_company && (
+                  <div style={{ 
+                    display: 'inline-block',
+                    fontSize: '0.7rem', 
+                    fontWeight: 600, 
+                    color: 'var(--accent)', 
+                    backgroundColor: 'rgba(0, 128, 128, 0.1)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    marginBottom: '0.5rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {project.client_company}
+                  </div>
+                )}
                 <h3 className="project-name">{project.name}</h3>
                 <div className="project-meta">
                   {project.proposal_number && <span className="project-meta-item"><Hash size={12} /> {project.proposal_number}</span>}
