@@ -9,6 +9,7 @@ const sprintRoutes = require('./routes/sprints');
 const commentRoutes = require('./routes/comments');
 const bugsRoutes = require('./routes/bugs');
 const usersRoutes = require('./routes/users');
+const parametersRoutes = require('./routes/parameters');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,6 +50,7 @@ async function startServer() {
   app.use('/api/comments', commentRoutes);
   app.use('/api/bugs', bugsRoutes);
   app.use('/api/users', usersRoutes);
+  app.use('/api/parameters', parametersRoutes);
 
   // Error handler
   app.use((err, req, res, next) => {

@@ -73,12 +73,19 @@ export const bugsAPI = {
 // Users
 export const usersAPI = {
   list: () => NODE_API.get('/users'),
-  changeRole: (id, role) => NODE_API.put(`/users/${id}/role`, { role }),
-  listRequests: () => NODE_API.get('/users/permission-requests'),
-  myRequest: () => NODE_API.get('/users/my-request'),
-  createRequest: (justification) => NODE_API.post('/users/permission-requests', { justification }),
-  approveRequest: (id) => NODE_API.put(`/users/permission-requests/${id}/approve`),
-  rejectRequest: (id, rejection_reason) => NODE_API.put(`/users/permission-requests/${id}/reject`, { rejection_reason }),
+  listRequests: () => NODE_API.get('/users/requests'),
+  myRequest: () => NODE_API.get('/users/requests/me'),
+  createRequest: (justification) => NODE_API.post('/users/requests', { justification }),
+  approveRequest: (requestId) => NODE_API.post(`/users/requests/${requestId}/approve`),
+  rejectRequest: (requestId, reason) => NODE_API.post(`/users/requests/${requestId}/reject`, { reason }),
+  changeRole: (userId, newRole) => NODE_API.put(`/users/${userId}/role`, { role: newRole })
+};
+
+// Parameters
+export const parametersAPI = {
+  list: () => NODE_API.get('/parameters'),
+  create: (data) => NODE_API.post('/parameters', data),
+  delete: (id) => NODE_API.delete(`/parameters/${id}`)
 };
 
 // Analytics (Python API)

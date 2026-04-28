@@ -1,17 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { projectsAPI } from '../services/api';
-import { FolderPlus, Search, Calendar, Hash, FlaskConical, Code2, UserCircle, ClipboardList, Folder } from 'lucide-react';
+import { projectsAPI, parametersAPI } from '../services/api';
+import { FolderPlus, Search, Calendar, Hash, FlaskConical, Code2, UserCircle, ClipboardList, Folder, Filter, X } from 'lucide-react';
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filtros
   const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterClient, setFilterClient] = useState('');
+  const [filterDev, setFilterDev] = useState('');
+  const [filterQa, setFilterQa] = useState('');
+  const [filterManager, setFilterManager] = useState('');
+
+  const [parameters, setParameters] = useState([]);
 
   useEffect(() => {
     loadProjects();
+    loadParameters();
   }, []);
+
+  const loadParameters = async () => {
+    try {
+      const res = await parametersAPI.list();
+      setParameters(res.data.parameters || []);
+    } catch (err) {
+      console.error('Erro ao carregar parametros', err);
+    }
+  };
+
+  const getOptions = (category) => parameters.filter(p => p.category === category);
 
   const loadProjects = async () => {
     try {
@@ -24,11 +45,17 @@ export default function ProjectsPage() {
     }
   };
 
-  const filtered = projects.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.qa_name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.developer_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = projects.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
+                        p.proposal_number?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchClient = filterClient === '' || p.client_company === filterClient;
+    const matchDev = filterDev === '' || p.developer_name === filterDev;
+    const matchQa = filterQa === '' || p.qa_name === filterQa;
+    const matchManager = filterManager === '' || p.manager_name === filterManager;
+
+    return matchSearch && matchClient && matchDev && matchQa && matchManager;
+  });
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -52,16 +79,70 @@ export default function ProjectsPage() {
       </div>
 
       {projects.length > 0 && (
-        <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input
-            id="search-projects"
-            className="form-input"
-            style={{ paddingLeft: '2.5rem', maxWidth: '400px' }}
-            placeholder="Buscar projetos..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '280px', maxWidth: '400px' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                id="search-projects"
+                className="form-input"
+                style={{ paddingLeft: '2.5rem' }}
+                placeholder="Buscar por nome ou nº proposta..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <button 
+              className={`btn ${showFilters ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setShowFilters(!showFilters)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Filter size={16} /> Filtros Avançados
+            </button>
+            {(filterClient || filterDev || filterQa || filterManager) && (
+              <button 
+                className="btn btn-ghost"
+                style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}
+                onClick={() => { setFilterClient(''); setFilterDev(''); setFilterQa(''); setFilterManager(''); }}
+              >
+                Limpar Filtros
+              </button>
+            )}
+          </div>
+
+          {/* Filtros Expansíveis */}
+          {showFilters && (
+            <div className="card" style={{ marginTop: '1rem', padding: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Empresa Cliente</label>
+                <select className="form-input" value={filterClient} onChange={e => setFilterClient(e.target.value)} style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}>
+                  <option value="">Todas</option>
+                  {getOptions('client').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Desenvolvedor(a)</label>
+                <select className="form-input" value={filterDev} onChange={e => setFilterDev(e.target.value)} style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}>
+                  <option value="">Todos</option>
+                  {getOptions('developer').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Analista QA</label>
+                <select className="form-input" value={filterQa} onChange={e => setFilterQa(e.target.value)} style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}>
+                  <option value="">Todos</option>
+                  {getOptions('qa').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Gestor</label>
+                <select className="form-input" value={filterManager} onChange={e => setFilterManager(e.target.value)} style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}>
+                  <option value="">Todos</option>
+                  {getOptions('manager').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

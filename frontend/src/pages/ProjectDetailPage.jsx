@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { projectsAPI, sprintsAPI, stepsAPI, commentsAPI, uploadsAPI } from '../services/api';
+import { projectsAPI, sprintsAPI, stepsAPI, commentsAPI, uploadsAPI, parametersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import StatusSummaryPanel from '../components/StatusSummaryPanel';
 import PermissionRequestBanner from '../components/PermissionRequestBanner';
-import { ArrowLeft, Plus, Trash2, Send, Edit3, Save, X, FileText, ExternalLink, UploadCloud, ClipboardList, FlaskConical, Code2, UserCircle, MessageSquare, TestTube2, Bug, Hash, Download, Loader2, ChevronDown, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Send, Edit3, Save, X, FileText, ExternalLink, UploadCloud, ClipboardList, FlaskConical, Code2, UserCircle, MessageSquare, TestTube2, Bug, Hash, Download, Loader2, ChevronDown, ChevronRight, ChevronsUpDown, ChevronsDownUp, DownloadCloud } from 'lucide-react';
 import { generateProjectPdf } from '../services/reportPdf';
 
 const STATUS_OPTIONS = [
@@ -28,13 +28,13 @@ export default function ProjectDetailPage() {
   const [newSprintName, setNewSprintName] = useState('');
   const [newComment, setNewComment] = useState('');
   const [newSteps, setNewSteps] = useState({});
-  const [newStepImage, setNewStepImage] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(null);
   const [editFile, setEditFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedCards, setExpandedCards] = useState({});
   const [statusFilter, setStatusFilter] = useState(null);
+  const [parameters, setParameters] = useState([]);
 
   // Load/persist expand state per project
   const getStorageKey = useCallback(() => `tc_expanded_${id}`, [id]);
@@ -56,7 +56,19 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     loadProject();
+    loadParameters();
   }, [id]);
+
+  const loadParameters = async () => {
+    try {
+      const res = await parametersAPI.list();
+      setParameters(res.data.parameters || []);
+    } catch (err) {
+      console.error('Erro ao carregar parametros', err);
+    }
+  };
+
+  const getOptions = (category) => parameters.filter(p => p.category === category);
 
   const startEditing = () => {
     setEditForm({
@@ -104,12 +116,10 @@ export default function ProjectDetailPage() {
       setSprints(loadedSprints);
       setComments(res.data.comments || []);
       setBugs(res.data.bugs || []);
-      // Load persisted expand state
       const saved = localStorage.getItem(`tc_expanded_${id}`);
       if (saved) {
         setExpandedCards(JSON.parse(saved));
       } else {
-        // All expanded by default
         const init = {};
         loadedSprints.forEach(s => { init[s.id] = true; });
         setExpandedCards(init);
@@ -140,17 +150,15 @@ export default function ProjectDetailPage() {
       navigate(`/bugs?new=true&projectId=${id}&sprintId=${sprintId}`);
       return;
     }
-    // Optimistic update
     setSprints(prev => prev.map(s => s.id === sprintId ? { ...s, status } : s));
     try {
       const res = await sprintsAPI.update(sprintId, { status });
       setSprints(prev => prev.map(s => s.id === sprintId ? res.data.sprint : s));
     } catch (err) {
       alert('Erro ao atualizar status');
-      loadProject(); // revert
+      loadProject();
     }
   };
-
 
   const deleteSprint = async (sprintId) => {
     if (!window.confirm('Excluir este test case e todos os steps?')) return;
@@ -184,9 +192,7 @@ export default function ProjectDetailPage() {
     try {
       const uploadRes = await uploadsAPI.uploadEvidence(file);
       const image_path = uploadRes.data.url || uploadRes.data.file_path;
-      
       const res = await stepsAPI.update(stepId, { image_path });
-      
       setSprints(sprints.map(s => {
         if (s.id === sprintId) {
           return {
@@ -283,7 +289,6 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="fade-in">
-      {/* Header */}
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button className="btn btn-ghost btn-icon" onClick={() => navigate('/projects')}>
@@ -317,7 +322,6 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {/* Scope */}
       {(project.scope_summary || project.attachment_path) && (
         <div className="card mb-2">
           <div className="card-header">
@@ -349,42 +353,12 @@ export default function ProjectDetailPage() {
                 >
                   <ExternalLink size={14} /> Visualizar
                 </a>
-                <button
-                  onClick={async () => {
-                    try {
-                      const url = `http://localhost:8000${project.attachment_path}`;
-                      const response = await fetch(url);
-                      const blob = await response.blob();
-                      const blobUrl = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = blobUrl;
-                      a.download = project.attachment_path.split('/').pop() || 'escopo';
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      window.URL.revokeObjectURL(blobUrl);
-                    } catch (error) {
-                      console.error('Erro ao baixar o arquivo:', error);
-                      const link = document.createElement('a');
-                      link.href = `http://localhost:8000${project.attachment_path}`;
-                      link.download = project.attachment_path.split('/').pop() || 'escopo';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }
-                  }}
-                  className="btn btn-secondary btn-sm"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}
-                >
-                  <Download size={14} /> Baixar
-                </button>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Status Summary Panel */}
       <StatusSummaryPanel
         sprints={sprints}
         bugs={bugs}
@@ -392,10 +366,8 @@ export default function ProjectDetailPage() {
         onFilterChange={setStatusFilter}
       />
 
-      {/* Permission Banner for viewers */}
       <PermissionRequestBanner />
 
-      {/* Test Cases Section */}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><TestTube2 size={18} style={{ color: 'var(--accent)' }} /> Test Cases</h2>
@@ -409,7 +381,6 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* Add Test Case - only for editors/admins */}
         {canEdit() && (
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
             <input className="form-input" placeholder="Nome do test case..."
@@ -422,7 +393,6 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* Test Case Cards */}
         {sprints
           .filter(s => !statusFilter ||
             (statusFilter === 'approved' && s.status === 'approved') ||
@@ -435,7 +405,6 @@ export default function ProjectDetailPage() {
             const isExpanded = expandedCards[sprint.id] !== false;
             return (
               <div key={sprint.id} className="sprint-card">
-                {/* Header — always visible */}
                 <div className="sprint-header" style={{ cursor: 'pointer' }}
                   onClick={() => toggleCard(sprint.id)}
                 >
@@ -470,7 +439,6 @@ export default function ProjectDetailPage() {
                     )}
                   </div>
                 </div>
-                {/* Body — collapsible */}
                 {isExpanded && (
                   <div className="sprint-body">
                     {sprint.steps?.length > 0 && (
@@ -480,9 +448,6 @@ export default function ProjectDetailPage() {
                             <div className="step-number">{sti + 1}</div>
                             <div className="step-content">
                               <p className="step-description">{stepItem.description}</p>
-                              {stepItem.expected_result && (
-                                <p className="step-expected">Esperado: {stepItem.expected_result}</p>
-                              )}
                               {stepItem.image_path && (
                                 <div style={{ marginTop: '0.75rem' }}>
                                   <a href={`http://localhost:8000${stepItem.image_path}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block' }}>
@@ -527,7 +492,6 @@ export default function ProjectDetailPage() {
                     )}
                   </div>
                 )}
-                {/* Collapsed summary */}
                 {!isExpanded && (
                   <div style={{ padding: '0.3rem 1rem 0.6rem 2.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                     {sprint.steps?.length || 0} passo(s)
@@ -537,24 +501,12 @@ export default function ProjectDetailPage() {
             );
           })
         }
-
-        {sprints.length === 0 && (
-          <div className="card">
-            <div className="empty-state">
-              <TestTube2 size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem', opacity: 0.4 }} />
-              <p className="empty-state-title">Nenhum test case criado</p>
-              <p className="empty-state-text">Adicione test cases para organizar seus testes</p>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Comments Section */}
       <div className="card">
         <div className="card-header">
           <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MessageSquare size={16} style={{ color: 'var(--accent)' }} /> Comentários ({comments.length})</h2>
         </div>
-
         <div className="comment-form">
           <input className="form-input" placeholder="Adicionar comentário sobre os testes..."
             value={newComment} onChange={e => setNewComment(e.target.value)}
@@ -564,14 +516,11 @@ export default function ProjectDetailPage() {
             <Send size={16} />
           </button>
         </div>
-
         {comments.length > 0 ? (
           <div className="activity-feed">
             {comments.map(comment => (
               <div key={comment.id} className="activity-item">
-                <div className="activity-avatar">
-                  {comment.user_name?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
+                <div className="activity-avatar">{comment.user_name?.charAt(0)?.toUpperCase() || 'U'}</div>
                 <div className="activity-content">
                   <div className="activity-header">
                     <span className="activity-user">{comment.user_name}</span>
@@ -589,7 +538,6 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      {/* Edit Modal */}
       {isEditing && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -604,81 +552,72 @@ export default function ProjectDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
               <div>
                 <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Nome do Projeto *</label>
                 <input className="form-input" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} />
               </div>
-              
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Nº da Proposta</label>
                   <input className="form-input" value={editForm.proposal_number} onChange={e => setEditForm({...editForm, proposal_number: e.target.value})} />
                 </div>
                 <div>
-                  <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Analista QA</label>
-                  <input className="form-input" value={editForm.qa_name} onChange={e => setEditForm({...editForm, qa_name: e.target.value})} />
+                  <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Desenvolvedor(a)</label>
+                  <select className="form-input" value={editForm.developer_name} onChange={e => setEditForm({...editForm, developer_name: e.target.value})} style={{ cursor: 'pointer' }}>
+                    <option value="">Selecione...</option>
+                    {getOptions('developer').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                  </select>
                 </div>
                 <div>
-                  <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Desenvolvedor</label>
-                  <input className="form-input" value={editForm.developer_name} onChange={e => setEditForm({...editForm, developer_name: e.target.value})} />
+                  <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>QA</label>
+                  <select className="form-input" value={editForm.qa_name} onChange={e => setEditForm({...editForm, qa_name: e.target.value})} style={{ cursor: 'pointer' }}>
+                    <option value="">Selecione...</option>
+                    {getOptions('qa').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Gestor / Solicitante</label>
-                  <input className="form-input" value={editForm.manager_name} onChange={e => setEditForm({...editForm, manager_name: e.target.value})} />
+                  <select className="form-input" value={editForm.manager_name} onChange={e => setEditForm({...editForm, manager_name: e.target.value})} style={{ cursor: 'pointer' }}>
+                    <option value="">Selecione...</option>
+                    {getOptions('manager').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Empresa Cliente</label>
-                  <select 
-                    className="form-input" 
-                    value={editForm.client_company} 
-                    onChange={e => setEditForm({...editForm, client_company: e.target.value})}
-                    style={{ cursor: 'pointer' }}
-                  >
+                  <select className="form-input" value={editForm.client_company} onChange={e => setEditForm({...editForm, client_company: e.target.value})} style={{ cursor: 'pointer' }}>
                     <option value="">Selecione uma empresa...</option>
-                    <option value="Consigaz">Consigaz</option>
-                    <option value="Camil">Camil</option>
-                    <option value="Arteb">Arteb</option>
-                    <option value="Lorenzetti">Lorenzetti</option>
-                    <option value="Belliz">Belliz</option>
-                    <option value="Diebold">Diebold</option>
-                    <option value="Internos">Internos</option>
+                    {getOptions('client').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
                   </select>
                 </div>
               </div>
-
               <div>
                 <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Resumo do Escopo</label>
-                <textarea 
-                  className="form-input" 
-                  style={{ minHeight: '100px', resize: 'vertical' }}
-                  value={editForm.scope_summary} 
-                  onChange={e => setEditForm({...editForm, scope_summary: e.target.value})} 
-                />
+                <textarea className="form-input" style={{ minHeight: '100px', resize: 'vertical' }} value={editForm.scope_summary} onChange={e => setEditForm({...editForm, scope_summary: e.target.value})} />
               </div>
-
               <div>
                 <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Novo Arquivo de Escopo (opcional)</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <button 
-                    className="btn btn-secondary" 
-                    onClick={() => document.getElementById('edit-scope-upload').click()}
-                  >
+                  <button className="btn btn-secondary" onClick={() => document.getElementById('edit-scope-upload').click()}>
                     <UploadCloud size={16} /> Selecionar Arquivo
                   </button>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                     {editFile ? editFile.name : (project.attachment_path ? 'Manter arquivo atual' : 'Nenhum arquivo novo')}
                   </span>
-                  <input 
-                    id="edit-scope-upload" 
-                    type="file" 
-                    style={{ display: 'none' }} 
-                    onChange={e => e.target.files[0] && setEditFile(e.target.files[0])}
-                  />
+                  <input id="edit-scope-upload" type="file" style={{ display: 'none' }} onChange={e => e.target.files[0] && setEditFile(e.target.files[0])} />
                 </div>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Mantenha as evidências organizadas para auditorias futuras.</p>
               </div>
-
+              {canEdit() && (
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+                  <button className="btn btn-secondary" onClick={() => alert('Em breve!')}>
+                    <UploadCloud size={16} /> Importar testes
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => alert('Em breve!')}>
+                    <DownloadCloud size={16} /> Exportar modelo
+                  </button>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                 <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>Cancelar</button>
                 <button className="btn btn-primary" onClick={handleSaveProject} disabled={isSaving}>
@@ -686,7 +625,6 @@ export default function ProjectDetailPage() {
                   {isSaving ? '' : 'Salvar'}
                 </button>
               </div>
-
             </div>
           </div>
         </div>

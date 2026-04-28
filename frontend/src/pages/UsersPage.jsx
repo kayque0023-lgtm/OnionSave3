@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { usersAPI } from '../services/api';
+import { usersAPI, parametersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, ClipboardList, ShieldCheck, Pencil, Eye, CheckCircle, XCircle, Clock, Search, X, Send, AlertTriangle, Lock } from 'lucide-react';
+import { Users, ClipboardList, ShieldCheck, Pencil, Eye, CheckCircle, XCircle, Clock, Search, X, Send, AlertTriangle, Lock, Settings, Plus, Trash2 } from 'lucide-react';
 
 const ROLE_LABELS = { admin: 'Administrador', editor: 'Editor', viewer: 'Visualização' };
 const ROLE_COLORS = { admin: '#22c55e', editor: '#3b82f6', viewer: '#8b5cf6' };
@@ -16,6 +16,11 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+
+  // Parameters
+  const [parameters, setParameters] = useState([]);
+  const [newParamCategory, setNewParamCategory] = useState('developer');
+  const [newParamValue, setNewParamValue] = useState('');
 
   // Role change confirm modal
   const [confirmModal, setConfirmModal] = useState(null);
@@ -39,9 +44,10 @@ export default function UsersPage() {
     setLoading(true);
     try {
       if (user?.role === 'admin' || user?.role === 'editor') {
-        const [usersRes, reqRes] = await Promise.all([usersAPI.list(), usersAPI.listRequests()]);
+        const [usersRes, reqRes, paramRes] = await Promise.all([usersAPI.list(), usersAPI.listRequests(), parametersAPI.list()]);
         setUsers(usersRes.data.users);
         setRequests(reqRes.data.requests);
+        setParameters(paramRes.data.parameters);
       } else if (user?.role === 'viewer') {
         const reqRes = await usersAPI.myRequest();
         setMyRequest(reqRes.data.request);
@@ -105,6 +111,30 @@ export default function UsersPage() {
       alert(err.response?.data?.error || 'Erro ao rejeitar.');
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleAddParam = async () => {
+    if (!newParamValue.trim()) return;
+    setProcessing(true);
+    try {
+      await parametersAPI.create({ category: newParamCategory, value: newParamValue.trim() });
+      setNewParamValue('');
+      await loadData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao adicionar parâmetro.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDeleteParam = async (id) => {
+    if (!window.confirm('Tem certeza que deseja remover este parâmetro? Ele continuará visível em projetos antigos que já o utilizam.')) return;
+    try {
+      await parametersAPI.delete(id);
+      await loadData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao remover parâmetro.');
     }
   };
 
@@ -304,6 +334,7 @@ export default function UsersPage() {
         {[
           { key: 'users', label: 'Usuários', icon: Users },
           { key: 'requests', label: 'Pedidos', icon: ClipboardList, badge: pendingCount },
+          { key: 'parameters', label: 'Parâmetros', icon: Settings }
         ].map(tab => (
           <button
             key={tab.key}
@@ -485,6 +516,81 @@ export default function UsersPage() {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── ABA PARAMETROS ── */}
+      {activeTab === 'parameters' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          
+          {/* List Parameters */}
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="card-header" style={{ borderBottom: '1px solid var(--border)' }}>
+              <h2 className="card-title">Opções Cadastradas</h2>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-tertiary)' }}>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>CATEGORIA</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>VALOR</th>
+                  <th style={{ padding: '0.75rem 1rem', width: '50px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {parameters.map((p, i) => (
+                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-secondary)' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 600, textTransform: 'capitalize' }}>
+                      {p.category === 'client' ? 'Cliente' : p.category === 'developer' ? 'Desenvolvedor' : p.category === 'qa' ? 'QA' : 'Gestor'}
+                    </td>
+                    <td style={{ padding: '0.75rem 1rem' }}>{p.value}</td>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                      {user?.role === 'admin' && (
+                        <button className="btn btn-ghost btn-icon btn-sm" onClick={() => handleDeleteParam(p.id)} title="Excluir">
+                          <Trash2 size={14} style={{ color: 'var(--danger)' }} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {parameters.length === 0 && (
+                  <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Nenhum parâmetro cadastrado.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Add Parameter */}
+          {user?.role === 'admin' && (
+            <div className="card" style={{ alignSelf: 'start' }}>
+              <div className="card-header">
+                <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Plus size={16} style={{ color: 'var(--accent)' }} /> Adicionar Nova Opção
+                </h2>
+              </div>
+              <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label className="form-label">Categoria</label>
+                  <select className="form-input" value={newParamCategory} onChange={e => setNewParamCategory(e.target.value)}>
+                    <option value="developer">Desenvolvedor</option>
+                    <option value="qa">Analista QA</option>
+                    <option value="manager">Gestor</option>
+                    <option value="client">Empresa Cliente</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Nome / Valor</label>
+                  <input className="form-input" placeholder="Ex: João Silva, Apple Inc." value={newParamValue} onChange={e => setNewParamValue(e.target.value)} />
+                </div>
+                <button className="btn btn-primary" onClick={handleAddParam} disabled={processing || !newParamValue.trim()}>
+                  {processing ? 'Adicionando...' : 'Adicionar Parâmetro'}
+                </button>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem', lineHeight: 1.5 }}>
+                  Estas opções aparecerão nos menus de seleção ao criar ou editar projetos e também nos filtros de busca da plataforma.
+                </p>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 

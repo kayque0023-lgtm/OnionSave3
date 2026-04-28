@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { projectsAPI, uploadsAPI, sprintsAPI, stepsAPI } from '../services/api';
+import { projectsAPI, uploadsAPI, sprintsAPI, stepsAPI, parametersAPI } from '../services/api';
 import { useDropzone } from 'react-dropzone';
 import { ChevronRight, ChevronLeft, Check, Upload, Plus, Trash2, FileText, ClipboardList, TestTube2 } from 'lucide-react';
 
@@ -17,6 +17,23 @@ export default function NewProjectPage() {
   const [qaName, setQaName] = useState('');
   const [managerName, setManagerName] = useState('');
   const [clientCompany, setClientCompany] = useState('');
+
+  const [parameters, setParameters] = useState([]);
+
+  useEffect(() => {
+    loadParameters();
+  }, []);
+
+  const loadParameters = async () => {
+    try {
+      const res = await parametersAPI.list();
+      setParameters(res.data.parameters || []);
+    } catch (err) {
+      console.error('Erro ao carregar parametros', err);
+    }
+  };
+
+  const getOptions = (category) => parameters.filter(p => p.category === category);
 
   // Step 2 - Escopo
   const [scopeSummary, setScopeSummary] = useState('');
@@ -169,20 +186,26 @@ export default function NewProjectPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Desenvolvedor</label>
-                  <input className="form-input" placeholder="Nome do dev"
-                    value={developerName} onChange={e => setDeveloperName(e.target.value)} />
+                  <label className="form-label">Desenvolvedor(a)</label>
+                  <select className="form-input" value={developerName} onChange={e => setDeveloperName(e.target.value)} style={{ cursor: 'pointer' }}>
+                    <option value="">Selecione...</option>
+                    {getOptions('developer').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                  </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">QA</label>
-                  <input className="form-input" placeholder="Nome do QA"
-                    value={qaName} onChange={e => setQaName(e.target.value)} />
+                  <label className="form-label">Analista QA</label>
+                  <select className="form-input" value={qaName} onChange={e => setQaName(e.target.value)} style={{ cursor: 'pointer' }}>
+                    <option value="">Selecione...</option>
+                    {getOptions('qa').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                  </select>
                 </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Gestor de Projetos</label>
-                <input className="form-input" placeholder="Nome do gestor"
-                  value={managerName} onChange={e => setManagerName(e.target.value)} />
+                <select className="form-input" value={managerName} onChange={e => setManagerName(e.target.value)} style={{ cursor: 'pointer' }}>
+                  <option value="">Selecione...</option>
+                  {getOptions('manager').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Empresa Cliente</label>
@@ -194,13 +217,7 @@ export default function NewProjectPage() {
                   style={{ cursor: 'pointer' }}
                 >
                   <option value="">Selecione uma empresa...</option>
-                  <option value="Consigaz">Consigaz</option>
-                  <option value="Camil">Camil</option>
-                  <option value="Arteb">Arteb</option>
-                  <option value="Lorenzetti">Lorenzetti</option>
-                  <option value="Belliz">Belliz</option>
-                  <option value="Diebold">Diebold</option>
-                  <option value="Internos">Internos</option>
+                  {getOptions('client').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
                 </select>
               </div>
               <div className="wizard-actions">

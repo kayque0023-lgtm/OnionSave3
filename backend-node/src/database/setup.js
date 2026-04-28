@@ -143,6 +143,25 @@ async function initializeDatabase() {
     )
   `);
 
+  database.run(`
+    CREATE TABLE IF NOT EXISTS parameters (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category TEXT NOT NULL,
+      value TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Default parameters if empty
+  const paramCountResult = database.exec('SELECT COUNT(*) as count FROM parameters');
+  const paramCount = paramCountResult[0]?.values[0][0] || 0;
+  if (paramCount === 0) {
+    const defaultClients = ['Consigaz', 'Camil', 'Arteb', 'Lorenzetti', 'Belliz', 'Diebold', 'Internos'];
+    defaultClients.forEach(client => {
+      database.run('INSERT INTO parameters (category, value) VALUES (?, ?)', ['client', client]);
+    });
+  }
+
   // Migrations — add columns if they don't exist yet
   const migrations = [
     'ALTER TABLE bugs ADD COLUMN status TEXT DEFAULT "pending"',
