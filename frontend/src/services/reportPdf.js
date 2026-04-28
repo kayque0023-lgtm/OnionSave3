@@ -1,5 +1,8 @@
 import jsPDF from 'jspdf';
 
+const PYTHON_HOST = (import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:8000/api')
+  .replace(/\/api\/?$/, '');
+
 const COLORS = {
   accent: [0, 128, 128],
   dark: [15, 23, 42],
@@ -119,7 +122,7 @@ export async function generateProjectPdf(project, sprints, bugs = []) {
 
   // ─── PROJECT INFO CARD ────────────────────────────────────────────────────
   doc.setFillColor(...COLORS.light);
-  doc.roundedRect(MARGIN, y, CONTENT_W, 48, 3, 3, 'F');
+  doc.roundedRect(MARGIN, y, CONTENT_W, 60, 3, 3, 'F');
 
   setFont('bold', 9, COLORS.muted);
   doc.text('INFORMAÇÕES DO PROJETO', MARGIN + 6, y + 8);
@@ -130,6 +133,7 @@ export async function generateProjectPdf(project, sprints, bugs = []) {
   doc.line(MARGIN + 6, y + 10, MARGIN + CONTENT_W - 6, y + 10);
 
   const infoItems = [
+    { label: 'Empresa Cliente', value: project.client_company || '—' },
     { label: 'Nº Proposta', value: project.proposal_number || '—' },
     { label: 'Desenvolvedor', value: project.developer_name || '—' },
     { label: 'Analista QA', value: project.qa_name || '—' },
@@ -150,7 +154,7 @@ export async function generateProjectPdf(project, sprints, bugs = []) {
     doc.text(doc.splitTextToSize(item.value, colW - 8)[0], ix, iy + 5);
   });
 
-  y += 56;
+  y += 68;
 
   // ─── SCOPE ────────────────────────────────────────────────────────────────
   if (project.scope_summary) {
@@ -350,7 +354,7 @@ export async function generateProjectPdf(project, sprints, bugs = []) {
 
         // Image
         if (step.image_path) {
-          const imgUrl = `http://localhost:8000${step.image_path}`;
+          const imgUrl = `${PYTHON_HOST}${step.image_path}`;
           const dataUrl = await loadImageAsDataUrl(imgUrl);
           if (dataUrl) {
             const imgType = getImageType(dataUrl);
@@ -413,7 +417,7 @@ export async function generateProjectPdf(project, sprints, bugs = []) {
         y = ty + 2;
 
         if (bug.evidence_url) {
-          const imgUrl = `http://localhost:8000${bug.evidence_url}`;
+          const imgUrl = `${PYTHON_HOST}${bug.evidence_url}`;
           const dataUrl = await loadImageAsDataUrl(imgUrl);
           if (dataUrl) {
             const imgType = getImageType(dataUrl);

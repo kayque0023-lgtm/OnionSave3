@@ -1,12 +1,15 @@
 import axios from 'axios';
 
+const NODE_BASE   = import.meta.env.VITE_NODE_API_URL   || 'http://localhost:3001/api';
+const PYTHON_BASE = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:8000/api';
+
 const NODE_API = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: NODE_BASE,
   headers: { 'Content-Type': 'application/json' }
 });
 
 const PYTHON_API = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: PYTHON_BASE,
   headers: { 'Content-Type': 'application/json' }
 });
 

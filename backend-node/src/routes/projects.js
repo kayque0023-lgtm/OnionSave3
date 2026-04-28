@@ -38,12 +38,12 @@ router.post('/', [
   }
 
   try {
-    const { name, proposal_number, developer_name, qa_name, manager_name } = req.body;
+    const { name, proposal_number, developer_name, qa_name, manager_name, client_company } = req.body;
 
     const result = runSql(`
-      INSERT INTO projects (user_id, name, proposal_number, developer_name, qa_name, manager_name)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [req.user.id, name, proposal_number || null, developer_name || null, qa_name || null, manager_name || null]);
+      INSERT INTO projects (user_id, name, proposal_number, developer_name, qa_name, manager_name, client_company)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [req.user.id, name, proposal_number || null, developer_name || null, qa_name || null, manager_name || null, client_company || null]);
 
     const project = queryOne('SELECT * FROM projects WHERE id = ?', [result.lastInsertRowid]);
     res.status(201).json({ project });
@@ -86,7 +86,7 @@ router.put('/:id', (req, res) => {
     const project = queryOne('SELECT * FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
     if (!project) return res.status(404).json({ error: 'Projeto não encontrado' });
 
-    const { name, proposal_number, developer_name, qa_name, manager_name, scope_summary, attachment_path, status } = req.body;
+    const { name, proposal_number, developer_name, qa_name, manager_name, client_company, scope_summary, attachment_path, status } = req.body;
     // sql.js cannot bind undefined — convert to null
     const n = (v) => v === undefined ? null : v;
 
@@ -97,12 +97,13 @@ router.put('/:id', (req, res) => {
         developer_name = COALESCE(?, developer_name),
         qa_name = COALESCE(?, qa_name),
         manager_name = COALESCE(?, manager_name),
+        client_company = COALESCE(?, client_company),
         scope_summary = COALESCE(?, scope_summary),
         attachment_path = COALESCE(?, attachment_path),
         status = COALESCE(?, status),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [n(name), n(proposal_number), n(developer_name), n(qa_name), n(manager_name), n(scope_summary), n(attachment_path), n(status), req.params.id]);
+    `, [n(name), n(proposal_number), n(developer_name), n(qa_name), n(manager_name), n(client_company), n(scope_summary), n(attachment_path), n(status), req.params.id]);
 
     const updated = queryOne('SELECT * FROM projects WHERE id = ?', [req.params.id]);
     res.json({ project: updated });

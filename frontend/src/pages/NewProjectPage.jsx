@@ -16,6 +16,7 @@ export default function NewProjectPage() {
   const [developerName, setDeveloperName] = useState('');
   const [qaName, setQaName] = useState('');
   const [managerName, setManagerName] = useState('');
+  const [clientCompany, setClientCompany] = useState('');
 
   // Step 2 - Escopo
   const [scopeSummary, setScopeSummary] = useState('');
@@ -40,7 +41,8 @@ export default function NewProjectPage() {
     try {
       const res = await projectsAPI.create({
         name, proposal_number: proposalNumber,
-        developer_name: developerName, qa_name: qaName, manager_name: managerName
+        developer_name: developerName, qa_name: qaName, manager_name: managerName,
+        client_company: clientCompany || null
       });
       setProjectId(res.data.project.id);
       setStep(2);
@@ -181,6 +183,25 @@ export default function NewProjectPage() {
                 <label className="form-label">Gestor de Projetos</label>
                 <input className="form-input" placeholder="Nome do gestor"
                   value={managerName} onChange={e => setManagerName(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Empresa Cliente</label>
+                <select
+                  id="project-company"
+                  className="form-input"
+                  value={clientCompany}
+                  onChange={e => setClientCompany(e.target.value)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value="">Selecione uma empresa...</option>
+                  <option value="Consigaz">Consigaz</option>
+                  <option value="Camil">Camil</option>
+                  <option value="Arteb">Arteb</option>
+                  <option value="Lorenzetti">Lorenzetti</option>
+                  <option value="Belliz">Belliz</option>
+                  <option value="Diebold">Diebold</option>
+                  <option value="Internos">Internos</option>
+                </select>
               </div>
               <div className="wizard-actions">
                 <div />

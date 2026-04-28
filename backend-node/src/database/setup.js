@@ -61,6 +61,7 @@ async function initializeDatabase() {
       developer_name TEXT,
       qa_name TEXT,
       manager_name TEXT,
+      client_company TEXT,
       scope_summary TEXT,
       attachment_path TEXT,
       status TEXT DEFAULT 'active',
@@ -147,6 +148,7 @@ async function initializeDatabase() {
     'ALTER TABLE bugs ADD COLUMN status TEXT DEFAULT "pending"',
     'ALTER TABLE steps ADD COLUMN image_path TEXT',
     'ALTER TABLE users ADD COLUMN role TEXT DEFAULT "viewer"',
+    'ALTER TABLE projects ADD COLUMN client_company TEXT',
   ];
   for (const sql of migrations) {
     try { database.run(sql); } catch (e) { /* already exists */ }

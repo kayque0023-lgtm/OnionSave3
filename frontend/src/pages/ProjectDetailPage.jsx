@@ -65,6 +65,7 @@ export default function ProjectDetailPage() {
       developer_name: project.developer_name || '',
       qa_name: project.qa_name || '',
       manager_name: project.manager_name || '',
+      client_company: project.client_company || '',
       scope_summary: project.scope_summary || '',
       status: project.status || 'active'
     });
@@ -198,6 +199,24 @@ export default function ProjectDetailPage() {
     } catch (err) {
       console.error('Erro ao fazer upload da imagem do step:', err);
       alert('Erro ao anexar imagem ao passo de teste.');
+    }
+  };
+
+  const removeStepImage = async (stepId, sprintId) => {
+    try {
+      await stepsAPI.update(stepId, { image_path: null });
+      setSprints(sprints.map(s => {
+        if (s.id === sprintId) {
+          return {
+            ...s,
+            steps: s.steps.map(st => st.id === stepId ? { ...st, image_path: null } : st)
+          };
+        }
+        return s;
+      }));
+    } catch (err) {
+      console.error('Erro ao remover a imagem do step:', err);
+      alert('Erro ao remover imagem do passo de teste.');
     }
   };
 
@@ -477,6 +496,11 @@ export default function ProjectDetailPage() {
                                 <button className="btn btn-ghost btn-icon btn-sm" title="Anexar Imagem ao Passo" onClick={() => document.getElementById(`upload-step-${stepItem.id}`).click()}>
                                   <UploadCloud size={14} />
                                 </button>
+                                {stepItem.image_path && (
+                                  <button className="btn btn-ghost btn-icon btn-sm" title="Remover Imagem" onClick={() => removeStepImage(stepItem.id, sprint.id)}>
+                                    <X size={14} style={{ color: 'var(--danger)' }} />
+                                  </button>
+                                )}
                                 <input id={`upload-step-${stepItem.id}`} type="file" accept="image/*" style={{ display: 'none' }}
                                   onChange={e => e.target.files[0] && uploadStepImage(stepItem.id, sprint.id, e.target.files[0])}
                                 />
@@ -603,6 +627,24 @@ export default function ProjectDetailPage() {
                 <div>
                   <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Gestor / Solicitante</label>
                   <input className="form-input" value={editForm.manager_name} onChange={e => setEditForm({...editForm, manager_name: e.target.value})} />
+                </div>
+                <div>
+                  <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Empresa Cliente</label>
+                  <select 
+                    className="form-input" 
+                    value={editForm.client_company} 
+                    onChange={e => setEditForm({...editForm, client_company: e.target.value})}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <option value="">Selecione uma empresa...</option>
+                    <option value="Consigaz">Consigaz</option>
+                    <option value="Camil">Camil</option>
+                    <option value="Arteb">Arteb</option>
+                    <option value="Lorenzetti">Lorenzetti</option>
+                    <option value="Belliz">Belliz</option>
+                    <option value="Diebold">Diebold</option>
+                    <option value="Internos">Internos</option>
+                  </select>
                 </div>
               </div>
 
