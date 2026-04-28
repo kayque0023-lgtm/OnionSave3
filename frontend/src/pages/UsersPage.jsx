@@ -38,6 +38,14 @@ export default function UsersPage() {
   // Justification expand
   const [expandedJustification, setExpandedJustification] = useState(null);
 
+  // Toast Notification
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   useEffect(() => { loadData(); }, [user]);
 
   const loadData = async () => {
@@ -121,8 +129,9 @@ export default function UsersPage() {
       await parametersAPI.create({ category: newParamCategory, value: newParamValue.trim() });
       setNewParamValue('');
       await loadData();
+      showToast('Opção cadastrada com sucesso!', 'success');
     } catch (err) {
-      alert(err.response?.data?.error || 'Erro ao adicionar parâmetro.');
+      showToast(err.response?.data?.error || 'Erro ao adicionar parâmetro.', 'error');
     } finally {
       setProcessing(false);
     }
@@ -133,8 +142,9 @@ export default function UsersPage() {
     try {
       await parametersAPI.delete(id);
       await loadData();
+      showToast('Opção removida com sucesso!', 'success');
     } catch (err) {
-      alert(err.response?.data?.error || 'Erro ao remover parâmetro.');
+      showToast(err.response?.data?.error || 'Erro ao remover parâmetro.', 'error');
     }
   };
 
@@ -630,6 +640,20 @@ export default function UsersPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', right: '24px', zIndex: 9999,
+          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          color: 'white', padding: '0.8rem 1.25rem', borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '0.5rem',
+          transition: 'all 0.3s ease', transform: 'translateX(0)', opacity: 1
+        }}>
+          {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{toast.message}</span>
         </div>
       )}
     </div>
