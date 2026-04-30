@@ -181,8 +181,14 @@ export default function DashboardPage() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const isoStr = dateStr.includes('T') || dateStr.endsWith('Z')
+      ? dateStr
+      : dateStr.replace(' ', 'T') + 'Z';
+    return new Date(isoStr).toLocaleString('pt-BR', {
+      day: '2-digit', month: 'short',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
+    });
   };
 
   if (loading) {

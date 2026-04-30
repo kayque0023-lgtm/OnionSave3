@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { projectsAPI, sprintsAPI, stepsAPI, commentsAPI, uploadsAPI, parametersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import StatusSummaryPanel from '../components/StatusSummaryPanel';
 import PermissionRequestBanner from '../components/PermissionRequestBanner';
-import { ArrowLeft, Plus, Trash2, Send, Edit3, Save, X, FileText, ExternalLink, UploadCloud, ClipboardList, FlaskConical, Code2, UserCircle, MessageSquare, TestTube2, Bug, Hash, Download, Loader2, ChevronDown, ChevronRight, ChevronsUpDown, ChevronsDownUp, DownloadCloud } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Send, Edit3, Save, X, FileText, ExternalLink, UploadCloud, ClipboardList, FlaskConical, Code2, UserCircle, MessageSquare, TestTube2, Bug, Hash, Download, Loader2, ChevronDown, ChevronRight, ChevronsUpDown, ChevronsDownUp, DownloadCloud, CheckCircle, AlertTriangle } from 'lucide-react';
 import { generateProjectPdf } from '../services/reportPdf';
 
 const STATUS_OPTIONS = [
@@ -35,6 +36,20 @@ export default function ProjectDetailPage() {
   const [expandedCards, setExpandedCards] = useState({});
   const [statusFilter, setStatusFilter] = useState(null);
   const [parameters, setParameters] = useState([]);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  useEffect(() => {
+    if (isEditing) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [isEditing]);
 
   // Load/persist expand state per project
   const getStorageKey = useCallback(() => `tc_expanded_${id}`, [id]);
@@ -86,7 +101,10 @@ export default function ProjectDetailPage() {
   };
 
   const handleSaveProject = async () => {
-    if (!editForm.name.trim()) return alert('O nome do projeto é obrigatório.');
+    if (!editForm.name.trim()) {
+      showToast('O nome do projeto é obrigatório.', 'error');
+      return;
+    }
     setIsSaving(true);
     try {
       let attachment_path = project.attachment_path;
@@ -100,9 +118,11 @@ export default function ProjectDetailPage() {
         attachment_path
       });
       setProject(res.data.project);
+      setEditFile(null);
       setIsEditing(false);
+      showToast('Projeto atualizado com sucesso!', 'success');
     } catch (err) {
-      alert('Erro ao salvar projeto');
+      showToast(err.response?.data?.error || 'Erro ao salvar projeto.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -368,6 +388,17 @@ export default function ProjectDetailPage() {
 
       <PermissionRequestBanner />
 
+      {canEdit() && (
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+          <button className="btn btn-secondary" onClick={() => alert('Em breve!')}>
+            <UploadCloud size={16} /> Importar testes
+          </button>
+          <button className="btn btn-secondary" onClick={() => alert('Em breve!')}>
+            <DownloadCloud size={16} /> Exportar modelo
+          </button>
+        </div>
+      )}
+
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><TestTube2 size={18} style={{ color: 'var(--accent)' }} /> Test Cases</h2>
@@ -538,26 +569,29 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      {isEditing && (
+      {isEditing && createPortal(
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '1rem'
+          zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          padding: '2rem 1rem', boxSizing: 'border-box', overflowY: 'auto'
         }}>
-          <div className="card" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 className="card-title">Editar Projeto</h2>
+          <div className="card" style={{
+            maxWidth: '640px', width: '100%', padding: '1.25rem',
+            margin: 'auto'
+          }}>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.5rem' }}>
+              <h2 className="card-title" style={{ margin: 0 }}>Editar Projeto</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => setIsEditing(false)}>
                 <X size={20} />
               </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
               <div>
                 <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Nome do Projeto *</label>
                 <input className="form-input" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Nº da Proposta</label>
                   <input className="form-input" value={editForm.proposal_number} onChange={e => setEditForm({...editForm, proposal_number: e.target.value})} />
@@ -583,7 +617,7 @@ export default function ProjectDetailPage() {
                     {getOptions('manager').map(p => <option key={p.id} value={p.value}>{p.value}</option>)}
                   </select>
                 </div>
-                <div>
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Empresa Cliente</label>
                   <select className="form-input" value={editForm.client_company} onChange={e => setEditForm({...editForm, client_company: e.target.value})} style={{ cursor: 'pointer' }}>
                     <option value="">Selecione uma empresa...</option>
@@ -593,11 +627,11 @@ export default function ProjectDetailPage() {
               </div>
               <div>
                 <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Resumo do Escopo</label>
-                <textarea className="form-input" style={{ minHeight: '100px', resize: 'vertical' }} value={editForm.scope_summary} onChange={e => setEditForm({...editForm, scope_summary: e.target.value})} />
+                <textarea className="form-input" style={{ minHeight: '70px', resize: 'vertical' }} value={editForm.scope_summary} onChange={e => setEditForm({...editForm, scope_summary: e.target.value})} />
               </div>
               <div>
                 <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Novo Arquivo de Escopo (opcional)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <button className="btn btn-secondary" onClick={() => document.getElementById('edit-scope-upload').click()}>
                     <UploadCloud size={16} /> Selecionar Arquivo
                   </button>
@@ -606,27 +640,30 @@ export default function ProjectDetailPage() {
                   </span>
                   <input id="edit-scope-upload" type="file" style={{ display: 'none' }} onChange={e => e.target.files[0] && setEditFile(e.target.files[0])} />
                 </div>
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Mantenha as evidências organizadas para auditorias futuras.</p>
               </div>
-              {canEdit() && (
-                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-                  <button className="btn btn-secondary" onClick={() => alert('Em breve!')}>
-                    <UploadCloud size={16} /> Importar testes
-                  </button>
-                  <button className="btn btn-secondary" onClick={() => alert('Em breve!')}>
-                    <DownloadCloud size={16} /> Exportar modelo
-                  </button>
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>Cancelar</button>
                 <button className="btn btn-primary" onClick={handleSaveProject} disabled={isSaving}>
-                  {isSaving ? 'Salvando...' : <Save size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />} 
+                  {isSaving ? 'Salvando...' : <Save size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />}
                   {isSaving ? '' : 'Salvar'}
                 </button>
               </div>
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '24px', right: '24px', zIndex: 9999,
+          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          color: 'white', padding: '0.8rem 1.25rem', borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '0.5rem',
+          transition: 'all 0.3s ease', transform: 'translateX(0)', opacity: 1
+        }}>
+          {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{toast.message}</span>
         </div>
       )}
     </div>

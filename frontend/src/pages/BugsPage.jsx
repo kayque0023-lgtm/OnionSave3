@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { bugsAPI, projectsAPI, sprintsAPI, uploadsAPI } from '../services/api';
 import { Bug, Plus, X, UploadCloud, Image as ImageIcon, ArrowLeft } from 'lucide-react';
@@ -48,6 +49,14 @@ export default function BugsPage() {
   useEffect(() => {
     loadBugs();
   }, [selectedProjectId]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [isModalOpen]);
 
   const loadData = async () => {
     try {
@@ -257,8 +266,13 @@ export default function BugsPage() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('pt-BR', {
-      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    const isoStr = dateStr.includes('T') || dateStr.endsWith('Z')
+      ? dateStr
+      : dateStr.replace(' ', 'T') + 'Z';
+    return new Date(isoStr).toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
     });
   };
 
@@ -389,16 +403,19 @@ export default function BugsPage() {
       </div>
 
       {/* Modal de Registro de Bug */}
-      {isModalOpen && (
+      {isModalOpen && createPortal(
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '1rem'
+          zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          padding: '2rem 1rem', boxSizing: 'border-box', overflowY: 'auto'
         }}>
-          <div className="card" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 className="card-title">Registrar Novo Bug</h2>
+          <div className="card" style={{
+            maxWidth: '640px', width: '100%', padding: '1.25rem',
+            margin: 'auto'
+          }}>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.5rem' }}>
+              <h2 className="card-title" style={{ margin: 0 }}>Registrar Novo Bug</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => {
                 setIsModalOpen(false);
                 if (location.search) navigate('/bugs', { replace: true });
@@ -406,13 +423,11 @@ export default function BugsPage() {
                 <X size={20} />
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1rem' }}>
-              
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
               <div>
-                <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Projeto afetado *</label>
-                <select 
-                  className="form-select" 
+                <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Projeto afetado *</label>
+                <select
+                  className="form-select"
                   required
                   value={formData.project_id}
                   onChange={handleProjectChange}
@@ -426,9 +441,9 @@ export default function BugsPage() {
 
               {formData.project_id && (
                 <div>
-                  <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Test Case *</label>
-                  <select 
-                    className="form-select" 
+                  <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Test Case *</label>
+                  <select
+                    className="form-select"
                     required
                     value={formData.sprint_id}
                     onChange={(e) => setFormData({...formData, sprint_id: e.target.value})}
@@ -442,22 +457,22 @@ export default function BugsPage() {
               )}
 
               <div>
-                <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Descrição do Bug *</label>
-                <textarea 
-                  className="form-input" 
+                <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Descrição do Bug *</label>
+                <textarea
+                  className="form-input"
                   required
                   placeholder="Descreva detalhadamente o comportamento inesperado..."
                   style={{ minHeight: '120px', resize: 'vertical' }}
-                  value={formData.description} 
-                  onChange={e => setFormData({...formData, description: e.target.value})} 
+                  value={formData.description}
+                  onChange={e => setFormData({...formData, description: e.target.value})}
                 />
               </div>
 
               <div>
-                <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Evidência (Imagem) - Opcional</label>
-                <div 
-                  className="file-drop-area" 
-                  style={{ 
+                <label className="form-label" style={{ marginBottom: '0.25rem', display: 'block' }}>Evidência (Imagem) - Opcional</label>
+                <div
+                  className="file-drop-area"
+                  style={{
                     border: '2px dashed var(--border)', borderRadius: '8px', padding: '2rem',
                     textAlign: 'center', cursor: 'pointer', background: 'var(--bg-secondary)',
                     transition: 'all 0.2s'
@@ -468,11 +483,11 @@ export default function BugsPage() {
                   <p style={{ margin: 0, fontWeight: 500 }}>
                     {evidenceFile ? evidenceFile.name : 'Clique para selecionar uma imagem'}
                   </p>
-                  <input 
-                    id="bug-evidence-upload" 
-                    type="file" 
+                  <input
+                    id="bug-evidence-upload"
+                    type="file"
                     accept="image/*"
-                    style={{ display: 'none' }} 
+                    style={{ display: 'none' }}
                     onChange={e => {
                       if (e.target.files && e.target.files.length > 0) {
                         setEvidenceFile(e.target.files[0]);
@@ -490,7 +505,7 @@ export default function BugsPage() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => {
                   setIsModalOpen(false);
                   if (location.search) navigate('/bugs', { replace: true });
@@ -499,10 +514,10 @@ export default function BugsPage() {
                   {isSubmitting ? 'Registrando...' : 'Registrar Bug'}
                 </button>
               </div>
-
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
