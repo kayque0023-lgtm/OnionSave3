@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import Particles from '../components/Particles';
+import OnionLabLogo from '../components/OnionLabLogo';
 
 export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
@@ -57,14 +58,16 @@ export default function LoginPage() {
       />
       <div className="auth-card fade-in" style={{ position: 'relative', zIndex: 1 }}>
         <div className="auth-header">
-          <div className="auth-logo">O</div>
+          <div className="auth-logo" style={{ color: '#ffffff' }}>
+            <OnionLabLogo size={48} style={{ color: '#ffffff' }} />
+          </div>
           <h1 className="auth-title">
             {isRegister ? 'Criar Conta' : 'Bem-vindo de volta'}
           </h1>
           <p className="auth-subtitle">
             {isRegister
               ? 'Preencha seus dados para começar'
-              : 'Entre na sua conta ALM Onion'
+              : 'Entre na sua conta OnionLAB'
             }
           </p>
         </div>

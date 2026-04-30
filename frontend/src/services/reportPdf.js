@@ -106,7 +106,7 @@ export async function generateProjectPdf(project, sprints, bugs = []) {
   doc.text('Relatório de Projeto', MARGIN + 22, 17);
 
   setFont('normal', 9, [220, 240, 240]);
-  doc.text('QualiQA • ALM Onion', MARGIN + 22, 23);
+  doc.text('QualiQA • OnionLAB', MARGIN + 22, 23);
 
   // Date
   const dateStr = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -461,7 +461,7 @@ export async function generateProjectPdf(project, sprints, bugs = []) {
     doc.setFillColor(...COLORS.accent);
     doc.rect(0, PAGE_H - 10, PAGE_W, 10, 'F');
     setFont('normal', 7.5, COLORS.white);
-    doc.text('QualiQA — ALM Onion', MARGIN, PAGE_H - 4);
+    doc.text('QualiQA — OnionLAB', MARGIN, PAGE_H - 4);
     const pageText = `Página ${p} de ${totalPages}`;
     doc.text(pageText, PAGE_W - MARGIN - doc.getTextWidth(pageText), PAGE_H - 4);
   }

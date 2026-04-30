@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Home, FolderPlus, Folders, LogOut, Sun, Moon, Bug, Users, ShieldCheck, Eye, Pencil } from 'lucide-react';
+import OnionLabLogo from './OnionLabLogo';
 
 const ROLE_LABELS = { admin: 'Administrador', editor: 'Editor', viewer: 'Visualização' };
 const ROLE_ICONS = { admin: ShieldCheck, editor: Pencil, viewer: Eye };
@@ -37,8 +38,11 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <Link to="/" className="navbar-brand">
-        <div className="navbar-logo">O</div>
-        <div className="navbar-title">ALM Onion</div>
+        <OnionLabLogo size={42} style={{ color: '#ffffff', flexShrink: 0 }} />
+        <div className="navbar-brand-text">
+          <div className="navbar-title">Onion<span>LAB</span></div>
+          <div className="navbar-subtitle">Sistema de Gerenciamento de Testes</div>
+        </div>
       </Link>
 
       <div className="navbar-links">
